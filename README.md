@@ -1,11 +1,11 @@
-# ⛏️ minespeer — Minesweeper AI Solver
+# ⛏️ mineswpeer — Minesweeper AI Solver
 
 > A browser-based Minesweeper AI assistant that analyzes your board in real-time and tells you the next safest move.
 
-[![HTML](https://img.shields.io/badge/Built%20With-HTML-orange?style=flat-square&logo=html5)](https://github.com/banzoxOG/minespeer/blob/main/index.html)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://github.com/banzoxOG/minespeer/blob/main/LICENSE)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Click%20Here-brightgreen?style=flat-square)](https://banzoxog.github.io/minespeer)
-[![Repo](https://img.shields.io/badge/GitHub-minespeer-181717?style=flat-square&logo=github)](https://github.com/banzoxOG/minespeer)
+[![HTML](https://img.shields.io/badge/Built%20With-HTML-orange?style=flat-square&logo=html5)](https://github.com/banzoxOG/mineswpeer/blob/main/index.html)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://github.com/banzoxOG/mineswpeer/blob/main/LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Click%20Here-brightgreen?style=flat-square)](https://banzoxog.github.io/mineswpeer)
+[![Repo](https://img.shields.io/badge/GitHub-mineswpeer-181717?style=flat-square&logo=github)](https://github.com/banzoxOG/mineswpeer)
 
 ---
 
@@ -27,7 +27,7 @@
 
 ## 🧠 About
 
-**minespeer** is a pure HTML/CSS/JavaScript Minesweeper AI solver. You mirror your Minesweeper board into the app — clicking cells, flagging mines, and entering numbers — and the AI instantly analyzes all visible constraints to recommend your next move: either a safe cell to open or a mine to flag.
+**mineswpeer** is a pure HTML/CSS/JavaScript Minesweeper AI solver. You mirror your Minesweeper board into the app — clicking cells, flagging mines, and entering numbers — and the AI instantly analyzes all visible constraints to recommend your next move: either a safe cell to open or a mine to flag.
 
 No backend. No frameworks. Just open `index.html` and play.
 
@@ -35,7 +35,7 @@ No backend. No frameworks. Just open `index.html` and play.
 
 ## 🌐 Live Demo
 
-👉 **[Try it here](https://banzoxog.github.io/minespeer)**
+👉 **[Try it here](https://banzoxog.github.io/mineswpeer)**
 
 Or clone and open locally — no build step required.
 
@@ -57,10 +57,10 @@ Or clone and open locally — no build step required.
 
 | Level        | Grid Size | Mines | Link |
 |--------------|-----------|-------|------|
-| Beginner     | 9 × 9     | 10    | [Select in app](https://banzoxog.github.io/minespeer) |
-| Intermediate | 16 × 16   | 40    | [Select in app](https://banzoxog.github.io/minespeer) |
-| Expert       | 30 × 16   | 99    | [Select in app](https://banzoxog.github.io/minespeer) |
-| Custom       | You choose | You choose | [Select in app](https://banzoxog.github.io/minespeer) |
+| Beginner     | 9 × 9     | 10    | [Select in app](https://banzoxog.github.io/mineswpeer) |
+| Intermediate | 16 × 16   | 40    | [Select in app](https://banzoxog.github.io/mineswpeer) |
+| Expert       | 30 × 16   | 99    | [Select in app](https://banzoxog.github.io/mineswpeer) |
+| Custom       | You choose | You choose | [Select in app](https://banzoxog.github.io/mineswpeer) |
 
 ---
 
@@ -100,13 +100,13 @@ Example:
 
 ### Option 1 — Use Live (Recommended)
 
-Open [https://banzoxog.github.io/minespeer](https://banzoxog.github.io/minespeer) in any browser.
+Open [https://banzoxog.github.io/mineswpeer](https://banzoxog.github.io/mineswpeer) in any browser.
 
 ### Option 2 — Run Locally
 
 ```bash
-git clone https://github.com/banzoxOG/minespeer.git
-cd minespeer
+git clone https://github.com/banzoxOG/mineswpeer.git
+cd mineswpeer
 open index.html   # macOS
 # or just double-click index.html on Windows/Linux
 ```
@@ -118,11 +118,11 @@ No npm. No build. No setup. It just works.
 ## 📁 Project Structure
 
 ```
-minespeer/
+mineswpeer/
 └── index.html    # Everything — HTML, CSS, and JS in one file (895 lines)
 ```
 
-All logic is contained in [`index.html`](https://github.com/banzoxOG/minespeer/blob/main/index.html):
+All logic is contained in [`index.html`](https://github.com/banzoxOG/mineswpeer/blob/main/index.html):
 
 - **HTML** — UI layout and board grid
 - **CSS** — Responsive styling, color-coded number cells
@@ -153,18 +153,18 @@ Contributions are welcome! Ideas to improve the solver:
 
 To contribute:
 
-1. [Fork the repo](https://github.com/banzoxOG/minespeer/fork)
+1. [Fork the repo](https://github.com/banzoxOG/mineswpeer/fork)
 2. Create a feature branch: `git checkout -b feature/my-improvement`
 3. Commit your changes: `git commit -m "Add probability solver"`
-4. Push and [open a Pull Request](https://github.com/banzoxOG/minespeer/pulls)
+4. Push and [open a Pull Request](https://github.com/banzoxOG/mineswpeer/pulls)
 
-Found a bug? [Open an issue](https://github.com/banzoxOG/minespeer/issues).
+Found a bug? [Open an issue](https://github.com/banzoxOG/mineswpeer/issues).
 
 ---
 
 ## 📄 License
 
-This project is open source. See the [LICENSE](https://github.com/banzoxOG/minespeer/blob/main/LICENSE) file for details.
+This project is open source. See the [LICENSE](https://github.com/banzoxOG/mineswpeer/blob/main/LICENSE) file for details.
 
 ---
 
