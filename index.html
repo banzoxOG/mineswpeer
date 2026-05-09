@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minesweeper AI Solver</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .warning-banner {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #92400e;
+    }
+
+    .warning-banner strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .info-banner {
+      background: #dbeafe;
+      border: 1px solid #93c5fd;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      color: #1e40af;
+    }
+
+    .info-banner p {
+      margin: 0;
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .info-banner p:nth-child(2) {
+      margin-top: 8px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    /* Level Selection Screen */
+    #level-select {
+      display: grid;
+      gap: 12px;
+    }
+
+    #level-select h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .level-btn {
+      padding: 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .level-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .level-btn p {
+      margin: 0;
+    }
+
+    .level-btn p:first-child {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .level-btn p:last-child {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .beginner {
+      background: #d1fae5;
+      border: 1px solid #86efac;
+      color: #065f46;
+    }
+
+    .intermediate {
+      background: #dbeafe;
+      border: 1px solid #93c5fd;
+      color: #1e40af;
+    }
+
+    .expert {
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+    }
+
+    .custom {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      color: #1f2937;
+    }
+
+    /* Custom Setup Screen */
+    #custom-setup {
+      display: none;
+    }
+
+    #custom-setup h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+
+    .custom-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-group label {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .input-group input {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Game Board Screen */
+    #game-board {
+      display: none;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f3f4f6;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .game-header-left p {
+      margin: 0;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .game-header-left p span {
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .game-header-left p:nth-child(2) {
+      margin-top: 6px;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 12px;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      background: white;
+      color: #1f2937;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #f3f4f6;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    /* Grid */
+    #grid {
+      display: grid;
+      gap: 4px;
+      background: #f3f4f6;
+      padding: 12px;
+      border-radius: 8px;
+      width: fit-content;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    .cell {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      font-size: 16px;
+      cursor: pointer;
+      border: 2px solid #d1d5db;
+      background: white;
+      border-radius: 4px;
+      font-weight: 600;
+      transition: all 0.1s;
+    }
+
+    .cell:hover {
+      background: #f9fafb;
+    }
+
+    .cell:active {
+      transform: scale(0.95);
+    }
+
+    /* Control Buttons */
+    .controls {
+      margin-bottom: 20px;
+    }
+
+    .controls label {
+      display: block;
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-empty {
+      background: #d1fae5;
+      border-color: #86efac;
+      color: #065f46;
+    }
+
+    .btn-number {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+    }
+
+    .btn-mine {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+
+    button:hover.btn-empty {
+      background: #a7f3d0;
+    }
+
+    button:hover.btn-number {
+      background: #e5e7eb;
+    }
+
+    button:hover.btn-mine {
+      background: #fecaca;
+    }
+
+    /* Number Selection */
+    #number-section {
+      display: none;
+      background: #f3f4f6;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    #number-section label {
+      display: block;
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .number-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .num-btn {
+      padding: 10px 16px;
+      border: 0.5px solid #d1d5db;
+      border-radius: 6px;
+      background: white;
+      color: white;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .num-btn:nth-child(1) { background: #3B82F6; }
+    .num-btn:nth-child(2) { background: #22C55E; }
+    .num-btn:nth-child(3) { background: #EF4444; }
+    .num-btn:nth-child(4) { background: #1E3A8A; }
+    .num-btn:nth-child(5) { background: #7F1D1D; }
+    .num-btn:nth-child(6) { background: #86EFAC; color: #1F2937; }
+    .num-btn:nth-child(7) { background: #000000; }
+    .num-btn:nth-child(8) { background: #EC4899; }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: #f3f4f6;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .stat-card p:first-child {
+      margin: 0;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .stat-card p:last-child {
+      margin: 6px 0 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    /* Selected Info */
+    #selected-info {
+      display: none;
+      padding: 12px;
+      background: #f3f4f6;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      border: 1px solid #e5e7eb;
+    }
+
+    #selected-info p {
+      margin: 0;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    #selected-info span {
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .btn-clear {
+      width: 100%;
+      background: #f3f4f6;
+      margin-bottom: 20px;
+    }
+
+    .btn-back {
+      background: white;
+      color: #1f2937;
+    }
+
+    .btn-start {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: #1e40af;
+    }
+
+    .btn-back-top {
+      background: white;
+      border-color: #d1d5db;
+      color: #1f2937;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⛏️ Minesweeper AI Solver</h1>
+
+    <div class="warning-banner">
+      <strong>🎮 Keyboard Shortcuts:</strong>
+      Right Click = 🚩 Flag | Space = ⬜ Empty | Numbers (1-8) = Set Number | CTRL+Click = Multi-select
+    </div>
+
+    <div id="game-screen">
+      <!-- Level Selection -->
+      <div id="level-select">
+        <h2>Choose Difficulty Level</h2>
+        <button class="level-btn beginner" onclick="selectLevel('beginner')">
+          <p>Beginner</p>
+          <p>9×9 grid, 10 mines • Easy for learning</p>
+        </button>
+        <button class="level-btn intermediate" onclick="selectLevel('intermediate')">
+          <p>Intermediate</p>
+          <p>16×16 grid, 40 mines • Medium challenge</p>
+        </button>
+        <button class="level-btn expert" onclick="selectLevel('expert')">
+          <p>Expert</p>
+          <p>30×16 grid, 99 mines • Hard mode</p>
+        </button>
+        <button class="level-btn custom" onclick="selectLevel('custom')">
+          <p>Custom</p>
+          <p>Choose your own size & mines</p>
+        </button>
+      </div>
+
+      <!-- Custom Setup -->
+      <div id="custom-setup">
+        <h2>Custom Game Setup</h2>
+        <div class="custom-inputs">
+          <div class="input-group">
+            <label>Rows</label>
+            <input type="number" id="custom-rows" value="10" min="3" max="30">
+          </div>
+          <div class="input-group">
+            <label>Columns</label>
+            <input type="number" id="custom-cols" value="10" min="3" max="30">
+          </div>
+        </div>
+        <div class="input-group" style="margin-bottom: 16px;">
+          <label>Mine Count</label>
+          <input type="number" id="custom-mines" value="10" min="1">
+        </div>
+        <div class="btn-group">
+          <button class="btn-back" onclick="backToLevels()">← Back</button>
+          <button class="btn-start" onclick="startCustomGame()">Start Game</button>
+        </div>
+      </div>
+
+      <!-- Game Board -->
+      <div id="game-board">
+        <div class="game-header">
+          <div class="game-header-left">
+            <p>Level: <span id="level-name">Expert</span></p>
+            <p>Board: <span id="board-size">30×16</span> | Mines: <span id="mine-count">99</span></p>
+          </div>
+          <div class="btn-group">
+            <button class="btn-back-top" onclick="backToLevels()">← Change Level</button>
+          </div>
+        </div>
+
+        <div class="info-banner">
+          <p>📍 NEXT MOVE</p>
+          <p id="next-move">👆 Click a cell to start</p>
+        </div>
+
+        <div id="grid"></div>
+
+        <div id="selected-info">
+          <p>Selected: <span id="cell-coords"></span></p>
+        </div>
+
+        <div class="controls">
+          <label>Apply to selected cells:</label>
+          <div class="button-grid">
+            <button class="btn-empty" onclick="revealCell('empty')">⬜ Empty (Space)</button>
+            <button class="btn-number" onclick="revealCell('number')">🔢 Number (1-8)</button>
+            <button class="btn-mine" onclick="revealCell('mine')">🚩 Flag (Right Click)</button>
+          </div>
+        </div>
+
+        <div id="number-section">
+          <label>Adjacent mines:</label>
+          <div class="number-buttons">
+            <button class="num-btn" onclick="selectNumber(1)">1</button>
+            <button class="num-btn" onclick="selectNumber(2)">2</button>
+            <button class="num-btn" onclick="selectNumber(3)">3</button>
+            <button class="num-btn" onclick="selectNumber(4)">4</button>
+            <button class="num-btn" onclick="selectNumber(5)">5</button>
+            <button class="num-btn" onclick="selectNumber(6)">6</button>
+            <button class="num-btn" onclick="selectNumber(7)">7</button>
+            <button class="num-btn" onclick="selectNumber(8)">8</button>
+          </div>
+        </div>
+
+        <button class="btn-clear" onclick="clearSelection()">Clear Selection</button>
+
+        <div class="stats">
+          <div class="stat-card">
+            <p>Opened</p>
+            <p id="stat-opened">0</p>
+          </div>
+          <div class="stat-card">
+            <p>Flagged</p>
+            <p id="stat-flagged">0</p>
+          </div>
+          <div class="stat-card">
+            <p>Hidden</p>
+            <p id="stat-hidden">0</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const colorMap = {
+      '1': '#3B82F6',
+      '2': '#22C55E',
+      '3': '#EF4444',
+      '4': '#1E3A8A',
+      '5': '#7F1D1D',
+      '6': '#86EFAC',
+      '7': '#000000',
+      '8': '#EC4899'
+    };
+
+    const textColorMap = {
+      '1': 'white',
+      '2': 'white',
+      '3': 'white',
+      '4': 'white',
+      '5': 'white',
+      '6': '#1F2937',
+      '7': 'white',
+      '8': 'white'
+    };
+
+    const levels = {
+      beginner: { rows: 9, cols: 9, mines: 10, name: 'Beginner' },
+      intermediate: { rows: 16, cols: 16, mines: 40, name: 'Intermediate' },
+      expert: { rows: 16, cols: 30, mines: 99, name: 'Expert' },
+      custom: { rows: 10, cols: 10, mines: 10, name: 'Custom' }
+    };
+
+    let selectedCells = new Set();
+    let board = [];
+    let flags = [];
+    let rows = 16;
+    let cols = 30;
+    let mineCount = 99;
+    let currentLevel = 'expert';
+    let lastSelectedCell = null;
+
+    function selectLevel(level) {
+      if (level === 'custom') {
+        document.getElementById('level-select').style.display = 'none';
+        document.getElementById('custom-setup').style.display = 'block';
+      } else {
+        startGame(level);
+      }
+    }
+
+    function backToLevels() {
+      document.getElementById('game-board').style.display = 'none';
+      document.getElementById('custom-setup').style.display = 'none';
+      document.getElementById('level-select').style.display = 'grid';
+      selectedCells.clear();
+    }
+
+    function startCustomGame() {
+      const customRows = parseInt(document.getElementById('custom-rows').value);
+      const customCols = parseInt(document.getElementById('custom-cols').value);
+      const customMines = parseInt(document.getElementById('custom-mines').value);
+      
+      if (customMines >= customRows * customCols) {
+        alert('Mine count must be less than total cells!');
+        return;
+      }
+      
+      rows = customRows;
+      cols = customCols;
+      mineCount = customMines;
+      currentLevel = 'custom';
+      
+      document.getElementById('custom-setup').style.display = 'none';
+      initGame();
+    }
+
+    function startGame(level) {
+      const levelData = levels[level];
+      rows = levelData.rows;
+      cols = levelData.cols;
+      mineCount = levelData.mines;
+      currentLevel = level;
+      
+      document.getElementById('level-select').style.display = 'none';
+      initGame();
+    }
+
+    function initGame() {
+      board = Array(rows).fill(null).map(() => Array(cols).fill(null));
+      flags = Array(rows).fill(null).map(() => Array(cols).fill(false));
+      selectedCells.clear();
+      lastSelectedCell = null;
+      
+      document.getElementById('level-name').textContent = levels[currentLevel].name;
+      document.getElementById('board-size').textContent = `${rows}×${cols}`;
+      document.getElementById('mine-count').textContent = mineCount;
+      document.getElementById('game-board').style.display = 'block';
+      
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      grid.style.gridTemplateColumns = `repeat(${cols}, 30px)`;
+      
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cell = document.createElement('button');
+          cell.className = 'cell';
+          cell.textContent = '?';
+          cell.onclick = (e) => toggleCell(r, c, cell, e);
+          cell.oncontextmenu = (e) => handleRightClick(e, r, c, cell);
+          cell.id = `cell-${r}-${c}`;
+          grid.appendChild(cell);
+        }
+      }
+      
+      updateStats();
+      document.getElementById('next-move').textContent = '👆 Click a cell to start';
+    }
+
+    function toggleCell(r, c, element, event) {
+      const key = `${r},${c}`;
+      lastSelectedCell = { r, c, element };
+      
+      if (event.ctrlKey) {
+        if (selectedCells.has(key)) {
+          selectedCells.delete(key);
+          element.style.borderColor = '#d1d5db';
+          element.style.borderWidth = '2px';
+        } else {
+          selectedCells.add(key);
+          element.style.borderColor = '#3b82f6';
+          element.style.borderWidth = '3px';
+        }
+      } else {
+        document.querySelectorAll('[id^="cell-"]').forEach(btn => {
+          btn.style.borderColor = '#d1d5db';
+          btn.style.borderWidth = '2px';
+        });
+        selectedCells.clear();
+        selectedCells.add(key);
+        element.style.borderColor = '#3b82f6';
+        element.style.borderWidth = '3px';
+      }
+      
+      updateSelectedInfo();
+    }
+
+    function handleRightClick(e, r, c, element) {
+      e.preventDefault();
+      const key = `${r},${c}`;
+      selectedCells.clear();
+      document.querySelectorAll('[id^="cell-"]').forEach(btn => {
+        btn.style.borderColor = '#d1d5db';
+        btn.style.borderWidth = '2px';
+      });
+      selectedCells.add(key);
+      lastSelectedCell = { r, c, element };
+      revealCell('mine');
+    }
+
+    function updateSelectedInfo() {
+      if (selectedCells.size === 0) {
+        document.getElementById('selected-info').style.display = 'none';
+        return;
+      }
+      
+      if (selectedCells.size === 1) {
+        const [key] = selectedCells;
+        const [r, c] = key.split(',');
+        document.getElementById('cell-coords').textContent = `Row ${parseInt(r) + 1}, Column ${parseInt(c) + 1}`;
+      } else {
+        document.getElementById('cell-coords').textContent = `${selectedCells.size} cells selected`;
+      }
+      
+      document.getElementById('selected-info').style.display = 'block';
+    }
+
+    function revealCell(type) {
+      if (selectedCells.size === 0 && !lastSelectedCell) {
+        alert('Select at least one cell!');
+        return;
+      }
+      
+      const cellsToProcess = selectedCells.size > 0 ? selectedCells : new Set([`${lastSelectedCell.r},${lastSelectedCell.c}`]);
+      
+      for (let key of cellsToProcess) {
+        const [r, c] = key.split(',').map(Number);
+        const element = document.getElementById(`cell-${r}-${c}`);
+        
+        if (type === 'mine') {
+          board[r][c] = 'M';
+          flags[r][c] = true;
+          element.textContent = '🚩';
+          element.style.background = '#fee2e2';
+          element.style.color = '#991b1b';
+          element.style.borderColor = '#fca5a5';
+        } else if (type === 'empty') {
+          board[r][c] = '0';
+          element.textContent = '0';
+          element.style.background = '#d1fae5';
+          element.style.color = '#065f46';
+          element.style.borderColor = '#86efac';
+        } else if (type === 'number') {
+          document.getElementById('number-section').style.display = 'block';
+          return;
+        }
+      }
+      
+      clearSelection();
+      analyze();
+    }
+
+    function selectNumber(num) {
+      if (selectedCells.size === 0 && !lastSelectedCell) return;
+      
+      const cellsToProcess = selectedCells.size > 0 ? selectedCells : new Set([`${lastSelectedCell.r},${lastSelectedCell.c}`]);
+      
+      for (let key of cellsToProcess) {
+        const [r, c] = key.split(',').map(Number);
+        const element = document.getElementById(`cell-${r}-${c}`);
+        board[r][c] = num.toString();
+        element.textContent = num.toString();
+        element.style.background = colorMap[num.toString()];
+        element.style.color = textColorMap[num.toString()];
+        element.style.borderColor = colorMap[num.toString()];
+      }
+      
+      document.getElementById('number-section').style.display = 'none';
+      clearSelection();
+      analyze();
+    }
+
+    function clearSelection() {
+      selectedCells.clear();
+      document.querySelectorAll('[id^="cell-"]').forEach(btn => {
+        btn.style.borderColor = '#d1d5db';
+        btn.style.borderWidth = '2px';
+      });
+      document.getElementById('selected-info').style.display = 'none';
+      document.getElementById('number-section').style.display = 'none';
+    }
+
+    function getNeighbors(r, c) {
+      let neighbors = [];
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !(dr === 0 && dc === 0)) {
+            neighbors.push({ r: nr, c: nc });
+          }
+        }
+      }
+      return neighbors;
+    }
+
+    function analyze() {
+      let safeMoves = [];
+      let mustFlag = [];
+      
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (board[r][c] && board[r][c] !== 'M' && board[r][c] !== '0') {
+            const num = parseInt(board[r][c]);
+            const neighbors = getNeighbors(r, c);
+            
+            let unrevealed = [];
+            let mineCount = 0;
+            
+            for (let neighbor of neighbors) {
+              const nr = neighbor.r, nc = neighbor.c;
+              if (board[nr][nc] === null) {
+                unrevealed.push(neighbor);
+              } else if (board[nr][nc] === 'M' || flags[nr][nc]) {
+                mineCount++;
+              }
+            }
+            
+            if (mineCount === num && unrevealed.length > 0) {
+              for (let cell of unrevealed) {
+                safeMoves.push({ r: cell.r, c: cell.c });
+              }
+            }
+            
+            if (mineCount < num && unrevealed.length === (num - mineCount)) {
+              for (let cell of unrevealed) {
+                mustFlag.push({ r: cell.r, c: cell.c });
+              }
+            }
+          }
+        }
+      }
+      
+      updateStats();
+      
+      if (mustFlag.length > 0) {
+        const move = mustFlag[0];
+        document.getElementById('next-move').textContent = `🚩 Flag Row ${move.r + 1}, Column ${move.c + 1}`;
+      } else if (safeMoves.length > 0) {
+        const move = safeMoves[0];
+        document.getElementById('next-move').textContent = `✅ Open Row ${move.r + 1}, Column ${move.c + 1}`;
+      } else {
+        document.getElementById('next-move').textContent = '⏳ Keep revealing to find patterns';
+      }
+    }
+
+    function updateStats() {
+      let opened = 0, flagged = 0, hidden = 0;
+      
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (board[r][c] === 'M' || flags[r][c]) flagged++;
+          else if (board[r][c]) opened++;
+          else hidden++;
+        }
+      }
+      
+      document.getElementById('stat-opened').textContent = opened;
+      document.getElementById('stat-flagged').textContent = flagged;
+      document.getElementById('stat-hidden').textContent = hidden;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!lastSelectedCell && selectedCells.size === 0) return;
+      
+      if (e.code === 'Space') {
+        e.preventDefault();
+        revealCell('empty');
+      } else if (e.code >= 'Digit1' && e.code <= 'Digit8') {
+        e.preventDefault();
+        const num = parseInt(e.code.replace('Digit', ''));
+        
+        if (selectedCells.size === 0 && lastSelectedCell) {
+          board[lastSelectedCell.r][lastSelectedCell.c] = num.toString();
+          lastSelectedCell.element.textContent = num.toString();
+          lastSelectedCell.element.style.background = colorMap[num.toString()];
+          lastSelectedCell.element.style.color = textColorMap[num.toString()];
+          analyze();
+        } else if (selectedCells.size > 0) {
+          selectNumber(num);
+        }
+      }
+    });
+
+    // Start with Expert level (30x16)
+    startGame('expert');
+  </script>
+</body>
+</html>
