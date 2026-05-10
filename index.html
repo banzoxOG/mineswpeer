@@ -61,6 +61,7 @@
     .ai-icon.flag { background: #450a0a; }
     .ai-icon.thinking { background: #1e3a5f; animation: pulse 1.2s infinite; }
     .ai-icon.idle { background: #1f2937; border: 1px solid #374151; }
+    .ai-icon.paused { background: #2d1a00; border: 1px solid #92400e; }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -102,6 +103,60 @@
     .badge-flag { background: #450a0a; color: #fca5a5; }
     .badge-multi { background: #1e3a5f; color: #93c5fd; }
     .badge-idle { background: #1f2937; color: #6b7280; border: 1px solid #374151; }
+    .badge-paused { background: #451a03; color: #fdba74; border: 1px solid #92400e; }
+
+    /* Pause Hint Toggle */
+    .pause-hint-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+      letter-spacing: 0.3px;
+      border: 1.5px solid;
+      user-select: none;
+    }
+
+    .pause-hint-btn.active {
+      background: #052e16;
+      border-color: #166534;
+      color: #86efac;
+    }
+
+    .pause-hint-btn.active:hover {
+      background: #064e23;
+    }
+
+    .pause-hint-btn.paused {
+      background: #450a0a;
+      border-color: #7f1d1d;
+      color: #fca5a5;
+    }
+
+    .pause-hint-btn.paused:hover {
+      background: #6b1111;
+    }
+
+    .pause-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: background 0.18s;
+    }
+
+    .pause-hint-btn.active .pause-dot { background: #22c55e; }
+    .pause-hint-btn.paused .pause-dot { background: #ef4444; }
+
+    /* Pause overlay on AI panel */
+    .ai-panel.paused-state {
+      border-color: #7f1d1d;
+      opacity: 0.75;
+    }
 
     /* Level Select */
     #level-select { display: grid; gap: 10px; }
@@ -335,6 +390,12 @@
     .hint-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .dot-flag { background: #ef4444; }
     .dot-safe { background: #22c55e; }
+
+    /* Paused hint list */
+    .hint-list.paused-list {
+      opacity: 0.4;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -352,7 +413,13 @@
       <div class="ai-move" id="ai-move">Select a level to begin</div>
       <div class="ai-reason" id="ai-reason"></div>
     </div>
-    <div class="ai-badge badge-idle" id="ai-badge">IDLE</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+      <div class="ai-badge badge-idle" id="ai-badge">IDLE</div>
+      <button class="pause-hint-btn active" id="pause-btn" onclick="togglePause()" title="Toggle AI hints on/off">
+        <span class="pause-dot"></span>
+        <span id="pause-label">Hints ON</span>
+      </button>
+    </div>
   </div>
 
   <div id="game-screen">
@@ -481,6 +548,31 @@
     let currentLevel = 'expert';
     let lastSelectedCell = null;
     let currentHints = [];
+    let hintsPaused = false;
+
+    /* ── Pause Toggle ── */
+    function togglePause() {
+      hintsPaused = !hintsPaused;
+      const btn = document.getElementById('pause-btn');
+      const label = document.getElementById('pause-label');
+      const panel = document.getElementById('ai-panel');
+      const hintList = document.getElementById('hint-list');
+
+      if (hintsPaused) {
+        btn.className = 'pause-hint-btn paused';
+        label.textContent = 'Hints OFF';
+        panel.classList.add('paused-state');
+        hintList.classList.add('paused-list');
+        clearHintAnimations();
+        setAI('paused', 'Hints paused', 'Toggle the button to resume AI suggestions', 'PAUSED');
+      } else {
+        btn.className = 'pause-hint-btn active';
+        label.textContent = 'Hints ON';
+        panel.classList.remove('paused-state');
+        hintList.classList.remove('paused-list');
+        analyze();
+      }
+    }
 
     function selectLevel(level) {
       if (level === 'custom') {
@@ -545,7 +637,12 @@
       }
 
       updateStats();
-      setAI('idle', 'Click a cell to start entering board state', '', 'IDLE');
+
+      if (hintsPaused) {
+        setAI('paused', 'Hints paused', 'Toggle the button to resume AI suggestions', 'PAUSED');
+      } else {
+        setAI('idle', 'Click a cell to start entering board state', '', 'IDLE');
+      }
     }
 
     function setAI(mode, move, reason, badge) {
@@ -572,6 +669,10 @@
         icon.textContent = '🧠';
         icon.classList.add('thinking');
         badgeEl.classList.add('badge-multi');
+      } else if (mode === 'paused') {
+        icon.textContent = '⏸️';
+        icon.classList.add('paused');
+        badgeEl.classList.add('badge-paused');
       } else {
         icon.textContent = '🤖';
         icon.classList.add('idle');
@@ -690,10 +791,17 @@
     }
 
     function analyze() {
-      clearHintAnimations();
       updateStats();
 
-      const safeMoves = new Map(); // key -> reason
+      /* If hints are paused, just clear animations and leave paused state */
+      if (hintsPaused) {
+        clearHintAnimations();
+        return;
+      }
+
+      clearHintAnimations();
+
+      const safeMoves = new Map();
       const flagMoves = new Map();
 
       // Pass 1: basic constraint logic
@@ -708,7 +816,6 @@
           const flagged = neighbors.filter(n => board[n.r][n.c] === 'M').length;
           const remaining = num - flagged;
 
-          // All mines accounted for → rest is safe
           if (remaining === 0 && unrevealed.length > 0) {
             for (const n of unrevealed) {
               const k = `${n.r},${n.c}`;
@@ -716,7 +823,6 @@
             }
           }
 
-          // Remaining mines = remaining hidden → all must be mines
           if (remaining > 0 && unrevealed.length === remaining) {
             for (const n of unrevealed) {
               const k = `${n.r},${n.c}`;
@@ -737,7 +843,6 @@
           const flaggedA = nbrsA.filter(n => board[n.r][n.c] === 'M').length;
           const remA = numA - flaggedA;
 
-          // Compare with each numbered neighbor
           for (let dr = -2; dr <= 2; dr++) {
             for (let dc = -2; dc <= 2; dc++) {
               if (dr === 0 && dc === 0) continue;
@@ -754,24 +859,19 @@
               const setA = new Set(unrevA.map(n => `${n.r},${n.c}`));
               const setB = new Set(unrevB.map(n => `${n.r},${n.c}`));
 
-              // Check if B is subset of A
               const bInA = [...setB].every(k => setA.has(k));
               if (bInA && setB.size > 0 && setA.size > setB.size) {
                 const diff = [...setA].filter(k => !setB.has(k));
                 const diffMines = remA - remB;
                 if (diffMines === 0) {
-                  // All mines in B, diff cells are safe
                   for (const k of diff) {
                     if (!safeMoves.has(k)) {
-                      const [nr,nc] = k.split(',').map(Number);
                       safeMoves.set(k, `Subset: mines of ${val} at (${r+1},${c+1}) are contained by ${val2} at (${r2+1},${c2+1})`);
                     }
                   }
                 } else if (diffMines === diff.length && diffMines > 0) {
-                  // All diff cells are mines
                   for (const k of diff) {
                     if (!flagMoves.has(k)) {
-                      const [nr,nc] = k.split(',').map(Number);
                       flagMoves.set(k, `Subset: ${diffMines} mine${diffMines>1?'s':''} must be in remaining cells`);
                     }
                   }
@@ -782,7 +882,6 @@
         }
       }
 
-      // Remove conflicts (if same cell in both, trust flag)
       for (const k of flagMoves.keys()) safeMoves.delete(k);
 
       const hintList = document.getElementById('hint-list');
@@ -794,8 +893,7 @@
         return;
       }
 
-      // Apply animations
-      let firstSafe = null, firstFlag = null;
+      let firstFlag = null;
       for (const [k, reason] of flagMoves) {
         const [r, c] = k.split(',').map(Number);
         const el = document.getElementById(`cell-${r}-${c}`);
@@ -808,10 +906,8 @@
         const el = document.getElementById(`cell-${r}-${c}`);
         if (el) el.classList.add('ai-hint-safe');
         currentHints.push({ type: 'safe', r, c, reason });
-        if (!firstSafe) firstSafe = { r, c, reason };
       }
 
-      // Build hint list UI
       const total = flagMoves.size + safeMoves.size;
       if (total > 0) {
         hintList.style.display = 'block';
@@ -829,7 +925,6 @@
         hintList.style.display = 'none';
       }
 
-      // Set main AI panel
       if (flagMoves.size > 0 && safeMoves.size > 0) {
         const topFlag = [...flagMoves.entries()][0];
         const [fr, fc] = topFlag[0].split(',').map(Number);
