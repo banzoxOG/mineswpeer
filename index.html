@@ -3,527 +3,998 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minesweeper AI Solver</title>
+  <title>Minesweeper AI Solver - Desktop Edition</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #111827;
-      color: #f9fafb;
-      padding: 16px;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #f1f5f9;
+      padding: 24px;
       min-height: 100vh;
     }
 
-    h1 {
-      font-size: 22px;
-      font-weight: 600;
-      color: #f9fafb;
-      margin-bottom: 16px;
-      letter-spacing: -0.3px;
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
     }
 
-    .shortcut-bar {
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin-bottom: 16px;
-      font-size: 12px;
-      color: #9ca3af;
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 24px;
+    }
+
+    /* Left Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: fit-content;
+      position: sticky;
+      top: 24px;
     }
 
     /* AI Panel */
     .ai-panel {
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .ai-panel.multi-hint {
+      border-color: #3b82f6;
+      background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+    }
+
+    .ai-header {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
 
     .ai-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 24px;
       flex-shrink: 0;
-      transition: background 0.3s;
+      transition: all 0.3s;
+      background: #334155;
+      border: 2px solid #475569;
     }
 
-    .ai-icon.safe { background: #052e16; }
-    .ai-icon.flag { background: #450a0a; }
-    .ai-icon.thinking { background: #1e3a5f; animation: pulse 1.2s infinite; }
-    .ai-icon.idle { background: #1f2937; border: 1px solid #374151; }
-    .ai-icon.paused { background: #2d1a00; border: 1px solid #92400e; }
+    .ai-icon.safe {
+      background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+      border-color: #10b981;
+      animation: glow-safe 2s infinite;
+    }
 
-    @keyframes pulse {
+    .ai-icon.flag {
+      background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+      border-color: #ef4444;
+      animation: glow-flag 2s infinite;
+    }
+
+    .ai-icon.thinking {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      border-color: #3b82f6;
+      animation: pulse-think 1.5s infinite;
+    }
+
+    .ai-icon.paused {
+      background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+      border-color: #b45309;
+    }
+
+    @keyframes glow-safe {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+      50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    }
+
+    @keyframes glow-flag {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+      50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+
+    @keyframes pulse-think {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+      50% { opacity: 0.6; }
     }
 
-    .ai-text-block { flex: 1; }
+    .ai-text {
+      flex: 1;
+    }
 
     .ai-label {
-      font-size: 11px;
-      color: #6b7280;
+      font-size: 10px;
+      color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
+      letter-spacing: 1.2px;
+      margin-bottom: 6px;
+      font-weight: 700;
     }
 
     .ai-move {
       font-size: 16px;
-      font-weight: 600;
-      color: #f9fafb;
-      line-height: 1.3;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.4;
     }
 
     .ai-reason {
       font-size: 12px;
-      color: #6b7280;
-      margin-top: 4px;
+      color: #94a3b8;
+      margin-top: 6px;
+      line-height: 1.4;
     }
 
     .ai-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 20px;
-      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: #334155;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid #475569;
+      transition: all 0.3s;
     }
 
-    .badge-safe { background: #052e16; color: #86efac; }
-    .badge-flag { background: #450a0a; color: #fca5a5; }
-    .badge-multi { background: #1e3a5f; color: #93c5fd; }
-    .badge-idle { background: #1f2937; color: #6b7280; border: 1px solid #374151; }
-    .badge-paused { background: #451a03; color: #fdba74; border: 1px solid #92400e; }
+    .ai-badge.safe {
+      background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+      color: #10b981;
+      border-color: #10b981;
+    }
 
-    /* Pause Hint Toggle */
-    .pause-hint-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 7px 14px;
-      border-radius: 20px;
-      font-size: 12px;
+    .ai-badge.flag {
+      background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+      color: #ef4444;
+      border-color: #ef4444;
+    }
+
+    .ai-badge.multi {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      color: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .ai-badge.paused {
+      background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+      color: #b45309;
+      border-color: #b45309;
+    }
+
+    .pause-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid #475569;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.18s;
-      letter-spacing: 0.3px;
-      border: 1.5px solid;
-      user-select: none;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
-    .pause-hint-btn.active {
-      background: #052e16;
-      border-color: #166534;
-      color: #86efac;
+    .pause-btn:hover {
+      background: #334155;
+      border-color: #64748b;
     }
 
-    .pause-hint-btn.active:hover {
-      background: #064e23;
+    .pause-btn.active {
+      background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+      border-color: #10b981;
+      color: #10b981;
     }
 
-    .pause-hint-btn.paused {
-      background: #450a0a;
-      border-color: #7f1d1d;
-      color: #fca5a5;
-    }
-
-    .pause-hint-btn.paused:hover {
-      background: #6b1111;
+    .pause-btn.paused {
+      background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+      border-color: #ef4444;
+      color: #ef4444;
     }
 
     .pause-dot {
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      flex-shrink: 0;
-      transition: background 0.18s;
+      background: currentColor;
     }
 
-    .pause-hint-btn.active .pause-dot { background: #22c55e; }
-    .pause-hint-btn.paused .pause-dot { background: #ef4444; }
-
-    /* Pause overlay on AI panel */
-    .ai-panel.paused-state {
-      border-color: #7f1d1d;
-      opacity: 0.75;
+    /* Level Cards */
+    .level-section {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
-    /* Level Select */
-    #level-select { display: grid; gap: 10px; }
-    #level-select h2 { font-size: 16px; font-weight: 500; color: #d1d5db; margin-bottom: 6px; }
+    .level-title {
+      font-size: 13px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .level-grid {
+      display: grid;
+      gap: 8px;
+    }
 
     .level-btn {
-      padding: 16px;
+      padding: 14px;
+      border: 2px solid #334155;
       border-radius: 8px;
-      border: 1px solid #374151;
+      background: #0f172a;
       cursor: pointer;
+      transition: all 0.3s;
       text-align: left;
-      transition: all 0.15s;
-      background: #1f2937;
     }
 
-    .level-btn:hover { border-color: #4b5563; background: #263344; transform: translateY(-1px); }
-    .level-btn p:first-child { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-    .level-btn p:last-child { font-size: 12px; opacity: 0.6; }
-    .level-btn.beginner p:first-child { color: #86efac; }
-    .level-btn.intermediate p:first-child { color: #93c5fd; }
-    .level-btn.expert p:first-child { color: #fca5a5; }
-    .level-btn.custom p:first-child { color: #fde68a; }
+    .level-btn:hover {
+      border-color: #64748b;
+      background: #1e293b;
+      transform: translateX(4px);
+    }
+
+    .level-btn-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .level-btn-desc {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .level-btn.beginner .level-btn-title { color: #4ade80; }
+    .level-btn.intermediate .level-btn-title { color: #60a5fa; }
+    .level-btn.expert .level-btn-title { color: #f87171; }
+    .level-btn.custom .level-btn-title { color: #fbbf24; }
 
     /* Custom Setup */
-    #custom-setup { display: none; }
-    #custom-setup h2 { font-size: 16px; font-weight: 500; color: #d1d5db; margin-bottom: 14px; }
-    .custom-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-    .input-group { display: flex; flex-direction: column; }
-    .input-group label { font-size: 12px; color: #6b7280; margin-bottom: 5px; }
+    .custom-setup {
+      display: none;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .custom-setup.active {
+      display: block;
+    }
+
+    .custom-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
     .input-group input {
-      padding: 8px 10px;
-      background: #111827;
-      border: 1px solid #374151;
+      padding: 10px;
+      background: #0f172a;
+      border: 2px solid #334155;
       border-radius: 6px;
       font-size: 14px;
-      color: #f9fafb;
+      color: #f1f5f9;
+      transition: all 0.3s;
     }
-    .input-group input:focus { outline: none; border-color: #3b82f6; }
 
-    /* Game Board */
-    #game-board { display: none; }
+    .input-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Main Content */
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .game-screen {
+      display: none;
+    }
+
+    .game-screen.active {
+      display: block;
+    }
 
     .game-header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #1f2937;
-      padding: 12px 14px;
-      border-radius: 8px;
-      margin-bottom: 14px;
-      border: 1px solid #374151;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
-    .game-header-left p { margin: 0; font-size: 12px; color: #6b7280; }
-    .game-header-left p span { font-weight: 600; color: #d1d5db; }
-    .game-header-left p:nth-child(2) { margin-top: 4px; }
-
-    /* Grid */
-    #grid {
+    .game-info {
       display: grid;
-      gap: 3px;
-      padding: 10px;
-      background: #1a2233;
+      gap: 8px;
+    }
+
+    .game-info-row {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+    }
+
+    .game-info-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .game-info-label {
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .game-info-value {
+      color: #f1f5f9;
+      font-weight: 700;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Game Board */
+    .board-container {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      overflow: auto;
+      max-height: 600px;
+    }
+
+    #grid {
+      display: inline-grid;
+      gap: 4px;
+      background: #0f172a;
+      padding: 12px;
       border-radius: 8px;
-      border: 1px solid #374151;
-      width: fit-content;
-      max-width: 100%;
-      margin-bottom: 16px;
-      overflow-x: auto;
+      border: 1px solid #334155;
     }
 
     .cell {
-      width: 28px;
-      height: 28px;
+      width: 36px;
+      height: 36px;
       padding: 0;
-      font-size: 13px;
+      font-size: 16px;
       cursor: pointer;
-      border: 1px solid #374151;
-      background: #1f2937;
+      border: 2px solid #334155;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
       border-radius: 4px;
       font-weight: 700;
-      color: #6b7280;
-      transition: background 0.1s, border-color 0.1s, transform 0.1s;
+      color: #64748b;
+      transition: all 0.15s;
       position: relative;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .cell:hover { background: #263344; border-color: #4b5563; }
-    .cell:active { transform: scale(0.93); }
-    .cell.selected { border-color: #3b82f6 !important; border-width: 2px !important; box-shadow: 0 0 0 1px #3b82f6; }
+    .cell:hover {
+      background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+      border-color: #64748b;
+      transform: scale(1.05);
+    }
 
-    /* Cell states */
-    .cell.revealed-empty { background: #0f1a0f; border-color: #1a3a1a; color: #4ade80; }
-    .cell.revealed-mine { background: #2a0a0a; border-color: #7f1d1d; }
-    .cell.num-1 { background: #1a2a3a; border-color: #1e3a8a; color: #60a5fa; }
-    .cell.num-2 { background: #0f2a1a; border-color: #166534; color: #4ade80; }
-    .cell.num-3 { background: #2a1a1a; border-color: #991b1b; color: #f87171; }
-    .cell.num-4 { background: #1a1530; border-color: #312e81; color: #a78bfa; }
-    .cell.num-5 { background: #2a1510; border-color: #9a3412; color: #fb923c; }
-    .cell.num-6 { background: #0a2020; border-color: #134e4a; color: #2dd4bf; }
-    .cell.num-7 { background: #201a28; border-color: #4a1d96; color: #c4b5fd; }
-    .cell.num-8 { background: #252025; border-color: #581c87; color: #e879f9; }
+    .cell:active {
+      transform: scale(0.95);
+    }
 
-    /* AI highlight animations */
+    .cell.selected {
+      border: 2px solid #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+    }
+
+    /* Cell States */
+    .cell.revealed-empty {
+      background: linear-gradient(135deg, #0f472e 0%, #065f46 100%);
+      border-color: #10b981;
+      color: #4ade80;
+    }
+
+    .cell.revealed-mine {
+      background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+
+    .cell.num-1 { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border-color: #3b82f6; color: #60a5fa; }
+    .cell.num-2 { background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-color: #10b981; color: #4ade80; }
+    .cell.num-3 { background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%); border-color: #ef4444; color: #f87171; }
+    .cell.num-4 { background: linear-gradient(135deg, #312e81 0%, #3730a3 100%); border-color: #8b5cf6; color: #a78bfa; }
+    .cell.num-5 { background: linear-gradient(135deg, #92400e 0%, #b45309 100%); border-color: #f59e0b; color: #fbbf24; }
+    .cell.num-6 { background: linear-gradient(135deg, #0d4f4f 0%, #134e4a 100%); border-color: #2dd4bf; color: #99f6e4; }
+    .cell.num-7 { background: linear-gradient(135deg, #4a1d96 0%, #5b21b6 100%); border-color: #c4b5fd; color: #d8b4fe; }
+    .cell.num-8 { background: linear-gradient(135deg, #581c87 0%, #6b21a8 100%); border-color: #e879f9; color: #f0abfc; }
+
+    /* AI Hints */
     @keyframes flagPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); background: rgba(127,29,29,0.5); }
-      50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); background: rgba(185,28,28,0.6); }
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
+        border-color: #ef4444;
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+        border-color: #fca5a5;
+      }
     }
 
     @keyframes safePulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); background: rgba(5,46,22,0.7); }
-      50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); background: rgba(20,83,45,0.7); }
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8);
+        border-color: #10b981;
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+        border-color: #4ade80;
+      }
     }
 
     .ai-hint-flag {
-      animation: flagPulse 1.2s ease-in-out infinite;
-      border-color: #ef4444 !important;
-      border-width: 2px !important;
+      animation: flagPulse 1s ease-in-out infinite;
+      background: rgba(239, 68, 68, 0.15) !important;
     }
 
     .ai-hint-safe {
-      animation: safePulse 1.2s ease-in-out infinite;
-      border-color: #22c55e !important;
-      border-width: 2px !important;
+      animation: safePulse 1s ease-in-out infinite;
+      background: rgba(16, 185, 129, 0.15) !important;
     }
 
     /* Controls */
-    .controls { margin-bottom: 14px; }
-    .controls label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 8px; }
-    .button-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .controls-section {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .controls-label {
+      font-size: 12px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .control-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
 
     button {
-      padding: 9px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      transition: all 0.15s;
-    }
-
-    .btn-empty { background: #052e16; border: 1px solid #166534; color: #86efac; }
-    .btn-empty:hover { background: #064e23; }
-    .btn-number { background: #1f2937; border: 1px solid #374151; color: #d1d5db; }
-    .btn-number:hover { background: #263344; }
-    .btn-mine { background: #450a0a; border: 1px solid #7f1d1d; color: #fca5a5; }
-    .btn-mine:hover { background: #6b1111; }
-
-    #number-section {
-      display: none;
-      background: #1f2937;
-      padding: 14px;
+      padding: 11px;
       border-radius: 8px;
-      margin-bottom: 14px;
-      border: 1px solid #374151;
+      border: 2px solid #334155;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #0f172a;
+      color: #cbd5e1;
     }
 
-    #number-section label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 10px; }
-    .number-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+    button:hover {
+      border-color: #64748b;
+      background: #1e293b;
+      transform: translateY(-2px);
+    }
+
+    .btn-empty {
+      border-color: #10b981;
+      color: #4ade80;
+    }
+
+    .btn-empty:hover {
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .btn-number {
+      border-color: #3b82f6;
+      color: #60a5fa;
+    }
+
+    .btn-number:hover {
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .btn-mine {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    .btn-mine:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .number-section {
+      display: none;
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      margin-top: 12px;
+    }
+
+    .number-section.active {
+      display: block;
+    }
+
+    .number-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
 
     .num-btn {
-      padding: 8px 14px;
+      padding: 10px;
       border-radius: 6px;
+      border: none;
       cursor: pointer;
       font-weight: 700;
       font-size: 14px;
-      border: none;
       color: white;
+      transition: all 0.3s;
     }
 
-    .num-btn.n1 { background: #1d4ed8; }
-    .num-btn.n2 { background: #16a34a; }
-    .num-btn.n3 { background: #dc2626; }
-    .num-btn.n4 { background: #1e3a8a; }
-    .num-btn.n5 { background: #9a3412; }
-    .num-btn.n6 { background: #0f766e; }
-    .num-btn.n7 { background: #4c1d95; }
-    .num-btn.n8 { background: #9d174d; }
+    .num-btn:hover {
+      transform: scale(1.08);
+    }
 
-    #selected-info {
+    .num-btn.n1 { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); }
+    .num-btn.n2 { background: linear-gradient(135deg, #065f46 0%, #047857 100%); }
+    .num-btn.n3 { background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%); }
+    .num-btn.n4 { background: linear-gradient(135deg, #312e81 0%, #3730a3 100%); }
+    .num-btn.n5 { background: linear-gradient(135deg, #92400e 0%, #b45309 100%); }
+    .num-btn.n6 { background: linear-gradient(135deg, #0d4f4f 0%, #134e4a 100%); }
+    .num-btn.n7 { background: linear-gradient(135deg, #4a1d96 0%, #5b21b6 100%); }
+    .num-btn.n8 { background: linear-gradient(135deg, #581c87 0%, #6b21a8 100%); }
+
+    .selected-info {
       display: none;
-      padding: 10px 12px;
-      background: #1a2233;
-      border-radius: 6px;
-      margin-bottom: 14px;
-      border: 1px solid #374151;
-      font-size: 12px;
-      color: #9ca3af;
-    }
-
-    .btn-group { display: grid; grid-template-columns: auto auto; gap: 10px; }
-    .btn-back { background: #1f2937; border: 1px solid #374151; color: #d1d5db; }
-    .btn-back:hover { background: #263344; }
-    .btn-start { background: #1e3a5f; border: 1px solid #1d4ed8; color: #93c5fd; }
-    .btn-start:hover { background: #1e40af; }
-    .btn-back-top { background: #1f2937; border: 1px solid #374151; color: #9ca3af; font-size: 12px; padding: 7px 12px; }
-    .btn-back-top:hover { background: #263344; }
-    .btn-clear { width: 100%; background: #1f2937; border: 1px solid #374151; color: #6b7280; margin-bottom: 14px; }
-    .btn-clear:hover { background: #263344; }
-
-    /* Stats */
-    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .stat-card {
-      background: #1f2937;
       padding: 12px;
-      border-radius: 6px;
-      border: 1px solid #374151;
-      text-align: center;
-    }
-    .stat-card p:first-child { font-size: 11px; color: #6b7280; margin: 0; }
-    .stat-card p:last-child { font-size: 22px; font-weight: 700; color: #f9fafb; margin: 4px 0 0; }
-
-    /* Multi-hint list */
-    .hint-list {
-      background: #1f2937;
-      border: 1px solid #374151;
+      background: #0f172a;
+      border: 1px solid #334155;
       border-radius: 8px;
-      padding: 12px 14px;
-      margin-bottom: 14px;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 12px;
     }
 
-    .hint-list-title { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .selected-info.active {
+      display: block;
+    }
+
+    /* Hints List */
+    .hint-list {
+      display: none;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+
+    .hint-list.active {
+      display: block;
+    }
+
+    .hint-list-title {
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
     .hint-item {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 5px 0;
-      border-top: 1px solid #1f2937;
-      font-size: 13px;
+      padding: 6px 0;
+      border-top: 1px solid #334155;
+      font-size: 12px;
     }
-    .hint-item:first-of-type { border-top: none; }
-    .hint-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .dot-flag { background: #ef4444; }
-    .dot-safe { background: #22c55e; }
 
-    /* Paused hint list */
-    .hint-list.paused-list {
-      opacity: 0.4;
-      pointer-events: none;
+    .hint-item:first-child {
+      border-top: none;
+    }
+
+    .hint-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-flag { background: #ef4444; }
+    .dot-safe { background: #10b981; }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .stat-card {
+      background: #0f172a;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      text-align: center;
+    }
+
+    .stat-card-label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .stat-card-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #f1f5f9;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Buttons Row */
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .btn-back {
+      background: #0f172a;
+      border: 2px solid #334155;
+      color: #94a3b8;
+    }
+
+    .btn-back:hover {
+      border-color: #64748b;
+      background: #1e293b;
+      color: #cbd5e1;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      border: 2px solid #3b82f6;
+      color: #60a5fa;
+    }
+
+    .btn-start:hover {
+      background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+      border-color: #60a5fa;
+    }
+
+    .btn-clear {
+      width: 100%;
+      background: #0f172a;
+      border: 2px solid #334155;
+      color: #94a3b8;
+      margin-top: 12px;
+    }
+
+    .btn-clear:hover {
+      border-color: #64748b;
+      background: #1e293b;
+    }
+
+    /* Shortcuts */
+    .shortcuts {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .shortcut-item {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .shortcut-key {
+      background: #0f172a;
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid #334155;
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+      color: #cbd5e1;
+      min-width: 80px;
+    }
+
+    .shortcut-desc {
+      color: #94a3b8;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: relative;
+        top: 0;
+      }
+
+      .control-buttons {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
     }
   </style>
 </head>
 <body>
-  <h1>⛏️ Minesweeper AI Solver</h1>
+  <div class="container">
+    <h1>⛏️ Minesweeper AI Solver</h1>
+    <p class="subtitle">PC Edition • Right-click to flag • Click to reveal • Use keyboard shortcuts</p>
 
-  <div class="shortcut-bar">
-    Right-click = Flag &nbsp;|&nbsp; Space = Empty &nbsp;|&nbsp; 1–8 = Number &nbsp;|&nbsp; Ctrl+Click = Multi-select
-  </div>
-
-  <!-- AI Panel -->
-  <div class="ai-panel" id="ai-panel">
-    <div class="ai-icon idle" id="ai-icon">🤖</div>
-    <div class="ai-text-block">
-      <div class="ai-label">AI Suggestion</div>
-      <div class="ai-move" id="ai-move">Select a level to begin</div>
-      <div class="ai-reason" id="ai-reason"></div>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
-      <div class="ai-badge badge-idle" id="ai-badge">IDLE</div>
-      <button class="pause-hint-btn active" id="pause-btn" onclick="togglePause()" title="Toggle AI hints on/off">
-        <span class="pause-dot"></span>
-        <span id="pause-label">Hints ON</span>
-      </button>
-    </div>
-  </div>
-
-  <div id="game-screen">
-    <!-- Level Selection -->
-    <div id="level-select">
-      <h2>Choose Difficulty</h2>
-      <button class="level-btn beginner" onclick="selectLevel('beginner')">
-        <p>Beginner</p>
-        <p>9×9 grid · 10 mines</p>
-      </button>
-      <button class="level-btn intermediate" onclick="selectLevel('intermediate')">
-        <p>Intermediate</p>
-        <p>16×16 grid · 40 mines</p>
-      </button>
-      <button class="level-btn expert" onclick="selectLevel('expert')">
-        <p>Expert</p>
-        <p>30×16 grid · 99 mines</p>
-      </button>
-      <button class="level-btn custom" onclick="selectLevel('custom')">
-        <p>Custom</p>
-        <p>Choose your own size & mines</p>
-      </button>
-    </div>
-
-    <!-- Custom Setup -->
-    <div id="custom-setup">
-      <h2>Custom Game Setup</h2>
-      <div class="custom-inputs">
-        <div class="input-group">
-          <label>Rows</label>
-          <input type="number" id="custom-rows" value="10" min="3" max="30">
+    <div class="main-layout">
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <!-- AI Panel -->
+        <div class="ai-panel" id="ai-panel">
+          <div class="ai-header">
+            <div class="ai-icon idle" id="ai-icon">🤖</div>
+            <div class="ai-text">
+              <div class="ai-label">AI Suggestion</div>
+              <div class="ai-move" id="ai-move">Select a level to begin</div>
+              <div class="ai-reason" id="ai-reason"></div>
+            </div>
+          </div>
+          <div class="ai-badge badge-idle" id="ai-badge">IDLE</div>
+          <button class="pause-btn active" id="pause-btn" onclick="togglePause()">
+            <span class="pause-dot"></span>
+            <span id="pause-label">Hints ON</span>
+          </button>
         </div>
-        <div class="input-group">
-          <label>Columns</label>
-          <input type="number" id="custom-cols" value="10" min="3" max="30">
+
+        <!-- Shortcuts -->
+        <div class="shortcuts">
+          <div class="shortcut-item">
+            <span class="shortcut-key">LEFT CLICK</span>
+            <span class="shortcut-desc">Reveal cell</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">RIGHT CLICK</span>
+            <span class="shortcut-desc">Flag cell</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">SPACE</span>
+            <span class="shortcut-desc">Mark as empty</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">1-8</span>
+            <span class="shortcut-desc">Set number</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">CTRL+CLICK</span>
+            <span class="shortcut-desc">Multi-select</span>
+          </div>
         </div>
-      </div>
-      <div class="input-group" style="margin-bottom: 14px;">
-        <label>Mine Count</label>
-        <input type="number" id="custom-mines" value="10" min="1">
-      </div>
-      <div class="btn-group">
-        <button class="btn-back" onclick="backToLevels()">← Back</button>
-        <button class="btn-start" onclick="startCustomGame()">Start Game</button>
-      </div>
-    </div>
 
-    <!-- Game Board -->
-    <div id="game-board">
-      <div class="game-header">
-        <div class="game-header-left">
-          <p>Level: <span id="level-name">Expert</span></p>
-          <p>Board: <span id="board-size">30×16</span> · Mines: <span id="mine-count">99</span></p>
+        <!-- Level Selection -->
+        <div class="level-section" id="level-section">
+          <div class="level-title">Select Difficulty</div>
+          <div class="level-grid">
+            <button class="level-btn beginner" onclick="selectLevel('beginner')">
+              <div class="level-btn-title">🟢 Beginner</div>
+              <div class="level-btn-desc">9×9 · 10 mines</div>
+            </button>
+            <button class="level-btn intermediate" onclick="selectLevel('intermediate')">
+              <div class="level-btn-title">🔵 Intermediate</div>
+              <div class="level-btn-desc">16×16 · 40 mines</div>
+            </button>
+            <button class="level-btn expert" onclick="selectLevel('expert')">
+              <div class="level-btn-title">🔴 Expert</div>
+              <div class="level-btn-desc">30×16 · 99 mines</div>
+            </button>
+            <button class="level-btn custom" onclick="selectLevel('custom')">
+              <div class="level-btn-title">⚙️ Custom</div>
+              <div class="level-btn-desc">Your settings</div>
+            </button>
+          </div>
         </div>
-        <div class="btn-group">
-          <button class="btn-back-top" onclick="backToLevels()">← Change Level</button>
-        </div>
-      </div>
 
-      <div id="grid"></div>
-
-      <div id="selected-info">
-        <span id="cell-coords"></span>
-      </div>
-
-      <div class="controls">
-        <label>Apply to selected cells:</label>
-        <div class="button-grid">
-          <button class="btn-empty" onclick="revealCell('empty')">⬜ Empty</button>
-          <button class="btn-number" onclick="revealCell('number')">🔢 Number</button>
-          <button class="btn-mine" onclick="revealCell('mine')">🚩 Flag</button>
-        </div>
-      </div>
-
-      <div id="number-section">
-        <label>Adjacent mines:</label>
-        <div class="number-buttons">
-          <button class="num-btn n1" onclick="selectNumber(1)">1</button>
-          <button class="num-btn n2" onclick="selectNumber(2)">2</button>
-          <button class="num-btn n3" onclick="selectNumber(3)">3</button>
-          <button class="num-btn n4" onclick="selectNumber(4)">4</button>
-          <button class="num-btn n5" onclick="selectNumber(5)">5</button>
-          <button class="num-btn n6" onclick="selectNumber(6)">6</button>
-          <button class="num-btn n7" onclick="selectNumber(7)">7</button>
-          <button class="num-btn n8" onclick="selectNumber(8)">8</button>
+        <!-- Custom Setup -->
+        <div class="custom-setup" id="custom-setup">
+          <div class="level-title">Custom Game Setup</div>
+          <div class="custom-inputs">
+            <div class="input-group">
+              <label>Rows</label>
+              <input type="number" id="custom-rows" value="10" min="3" max="30">
+            </div>
+            <div class="input-group">
+              <label>Columns</label>
+              <input type="number" id="custom-cols" value="10" min="3" max="30">
+            </div>
+          </div>
+          <div class="input-group" style="margin-bottom: 12px;">
+            <label>Mines</label>
+            <input type="number" id="custom-mines" value="10" min="1">
+          </div>
+          <div class="button-row">
+            <button class="btn-back" onclick="backToLevels()">← Back</button>
+            <button class="btn-start" onclick="startCustomGame()">Start Game</button>
+          </div>
         </div>
       </div>
 
-      <button class="btn-clear" onclick="clearSelection()">Clear Selection</button>
+      <!-- MAIN CONTENT -->
+      <div class="content">
+        <!-- Game Screen -->
+        <div class="game-screen" id="game-screen">
+          <div class="game-header">
+            <div class="game-info">
+              <div class="game-info-row">
+                <div class="game-info-item">
+                  <span class="game-info-label">Level:</span>
+                  <span class="game-info-value" id="level-name">Expert</span>
+                </div>
+                <div class="game-info-item">
+                  <span class="game-info-label">Board:</span>
+                  <span class="game-info-value" id="board-size">30×16</span>
+                </div>
+                <div class="game-info-item">
+                  <span class="game-info-label">Mines:</span>
+                  <span class="game-info-value" id="mine-count">99</span>
+                </div>
+              </div>
+            </div>
+            <button class="btn-back" onclick="backToLevels()">← Change Level</button>
+          </div>
 
-      <div class="hint-list" id="hint-list" style="display:none"></div>
+          <div class="board-container">
+            <div id="grid"></div>
+          </div>
 
-      <div class="stats">
-        <div class="stat-card">
-          <p>Opened</p>
-          <p id="stat-opened">0</p>
-        </div>
-        <div class="stat-card">
-          <p>Flagged</p>
-          <p id="stat-flagged">0</p>
-        </div>
-        <div class="stat-card">
-          <p>Hidden</p>
-          <p id="stat-hidden">0</p>
+          <div class="controls-section">
+            <div class="selected-info" id="selected-info">
+              <span id="cell-coords"></span>
+            </div>
+
+            <label class="controls-label">Apply to Selected Cells</label>
+            <div class="control-buttons">
+              <button class="btn-empty" onclick="revealCell('empty')">⬜ Empty</button>
+              <button class="btn-number" onclick="revealCell('number')">🔢 Number</button>
+              <button class="btn-mine" onclick="revealCell('mine')">🚩 Flag</button>
+            </div>
+
+            <div class="number-section" id="number-section">
+              <label class="controls-label">Adjacent Mines</label>
+              <div class="number-buttons">
+                <button class="num-btn n1" onclick="selectNumber(1)">1</button>
+                <button class="num-btn n2" onclick="selectNumber(2)">2</button>
+                <button class="num-btn n3" onclick="selectNumber(3)">3</button>
+                <button class="num-btn n4" onclick="selectNumber(4)">4</button>
+                <button class="num-btn n5" onclick="selectNumber(5)">5</button>
+                <button class="num-btn n6" onclick="selectNumber(6)">6</button>
+                <button class="num-btn n7" onclick="selectNumber(7)">7</button>
+                <button class="num-btn n8" onclick="selectNumber(8)">8</button>
+              </div>
+            </div>
+
+            <button class="btn-clear" onclick="clearSelection()">Clear Selection</button>
+
+            <div class="hint-list" id="hint-list"></div>
+
+            <div class="stats">
+              <div class="stat-card">
+                <div class="stat-card-label">Opened</div>
+                <div class="stat-card-value" id="stat-opened">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-card-label">Flagged</div>
+                <div class="stat-card-value" id="stat-flagged">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-card-label">Hidden</div>
+                <div class="stat-card-value" id="stat-hidden">0</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -550,43 +1021,38 @@
     let currentHints = [];
     let hintsPaused = false;
 
-    /* ── Pause Toggle ── */
     function togglePause() {
       hintsPaused = !hintsPaused;
       const btn = document.getElementById('pause-btn');
       const label = document.getElementById('pause-label');
       const panel = document.getElementById('ai-panel');
-      const hintList = document.getElementById('hint-list');
 
       if (hintsPaused) {
-        btn.className = 'pause-hint-btn paused';
+        btn.className = 'pause-btn paused';
         label.textContent = 'Hints OFF';
-        panel.classList.add('paused-state');
-        hintList.classList.add('paused-list');
+        panel.classList.remove('multi-hint');
         clearHintAnimations();
         setAI('paused', 'Hints paused', 'Toggle the button to resume AI suggestions', 'PAUSED');
       } else {
-        btn.className = 'pause-hint-btn active';
+        btn.className = 'pause-btn active';
         label.textContent = 'Hints ON';
-        panel.classList.remove('paused-state');
-        hintList.classList.remove('paused-list');
         analyze();
       }
     }
 
     function selectLevel(level) {
       if (level === 'custom') {
-        document.getElementById('level-select').style.display = 'none';
-        document.getElementById('custom-setup').style.display = 'block';
+        document.getElementById('level-section').style.display = 'none';
+        document.getElementById('custom-setup').classList.add('active');
       } else {
         startGame(level);
       }
     }
 
     function backToLevels() {
-      document.getElementById('game-board').style.display = 'none';
-      document.getElementById('custom-setup').style.display = 'none';
-      document.getElementById('level-select').style.display = 'grid';
+      document.getElementById('game-screen').classList.remove('active');
+      document.getElementById('level-section').style.display = 'block';
+      document.getElementById('custom-setup').classList.remove('active');
       selectedCells.clear();
       currentHints = [];
       setAI('idle', 'Select a level to begin', '', 'IDLE');
@@ -598,14 +1064,14 @@
       const m = parseInt(document.getElementById('custom-mines').value);
       if (m >= r * c) { alert('Too many mines!'); return; }
       rows = r; cols = c; mineCount = m; currentLevel = 'custom';
-      document.getElementById('custom-setup').style.display = 'none';
+      document.getElementById('custom-setup').classList.remove('active');
       initGame();
     }
 
     function startGame(level) {
       const d = levels[level];
       rows = d.rows; cols = d.cols; mineCount = d.mines; currentLevel = level;
-      document.getElementById('level-select').style.display = 'none';
+      document.getElementById('level-section').style.display = 'none';
       initGame();
     }
 
@@ -618,11 +1084,11 @@
       document.getElementById('level-name').textContent = levels[currentLevel].name;
       document.getElementById('board-size').textContent = `${rows}×${cols}`;
       document.getElementById('mine-count').textContent = mineCount;
-      document.getElementById('game-board').style.display = 'block';
+      document.getElementById('game-screen').classList.add('active');
 
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
-      grid.style.gridTemplateColumns = `repeat(${cols}, 28px)`;
+      grid.style.gridTemplateColumns = `repeat(${cols}, 36px)`;
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
@@ -650,33 +1116,36 @@
       const moveEl = document.getElementById('ai-move');
       const reasonEl = document.getElementById('ai-reason');
       const badgeEl = document.getElementById('ai-badge');
+      const panel = document.getElementById('ai-panel');
 
       moveEl.textContent = move;
       reasonEl.textContent = reason;
       badgeEl.textContent = badge;
       badgeEl.className = 'ai-badge';
       icon.className = 'ai-icon';
+      panel.classList.remove('multi-hint');
 
       if (mode === 'safe') {
         icon.textContent = '✅';
         icon.classList.add('safe');
-        badgeEl.classList.add('badge-safe');
+        badgeEl.classList.add('safe');
       } else if (mode === 'flag') {
         icon.textContent = '🚩';
         icon.classList.add('flag');
-        badgeEl.classList.add('badge-flag');
+        badgeEl.classList.add('flag');
       } else if (mode === 'multi') {
         icon.textContent = '🧠';
         icon.classList.add('thinking');
-        badgeEl.classList.add('badge-multi');
+        badgeEl.classList.add('multi');
+        panel.classList.add('multi-hint');
       } else if (mode === 'paused') {
         icon.textContent = '⏸️';
         icon.classList.add('paused');
-        badgeEl.classList.add('badge-paused');
+        badgeEl.classList.add('paused');
       } else {
         icon.textContent = '🤖';
         icon.classList.add('idle');
-        badgeEl.classList.add('badge-idle');
+        badgeEl.classList.add('idle');
       }
     }
 
@@ -710,7 +1179,7 @@
     function updateSelectedInfo() {
       const info = document.getElementById('selected-info');
       const coords = document.getElementById('cell-coords');
-      if (selectedCells.size === 0) { info.style.display = 'none'; return; }
+      if (selectedCells.size === 0) { info.classList.remove('active'); return; }
       if (selectedCells.size === 1) {
         const [k] = selectedCells;
         const [r, c] = k.split(',');
@@ -718,7 +1187,7 @@
       } else {
         coords.textContent = `${selectedCells.size} cells selected`;
       }
-      info.style.display = 'block';
+      info.classList.add('active');
     }
 
     function revealCell(type) {
@@ -726,7 +1195,10 @@
         : lastSelectedCell ? new Set([`${lastSelectedCell.r},${lastSelectedCell.c}`]) : new Set();
       if (cells.size === 0) { alert('Select a cell first!'); return; }
 
-      if (type === 'number') { document.getElementById('number-section').style.display = 'block'; return; }
+      if (type === 'number') { 
+        document.getElementById('number-section').classList.add('active');
+        return; 
+      }
 
       for (const key of cells) {
         const [r, c] = key.split(',').map(Number);
@@ -755,7 +1227,7 @@
         el.textContent = num.toString();
         el.className = `cell ${numColors[num.toString()]}`;
       }
-      document.getElementById('number-section').style.display = 'none';
+      document.getElementById('number-section').classList.remove('active');
       clearSelectionUI();
       analyze();
     }
@@ -763,12 +1235,12 @@
     function clearSelectionUI() {
       selectedCells.clear();
       document.querySelectorAll('[id^="cell-"]').forEach(b => b.classList.remove('selected'));
-      document.getElementById('selected-info').style.display = 'none';
+      document.getElementById('selected-info').classList.remove('active');
     }
 
     function clearSelection() {
       clearSelectionUI();
-      document.getElementById('number-section').style.display = 'none';
+      document.getElementById('number-section').classList.remove('active');
     }
 
     function getNeighbors(r, c) {
@@ -793,7 +1265,6 @@
     function analyze() {
       updateStats();
 
-      /* If hints are paused, just clear animations and leave paused state */
       if (hintsPaused) {
         clearHintAnimations();
         return;
@@ -889,7 +1360,7 @@
 
       if (flagMoves.size === 0 && safeMoves.size === 0) {
         setAI('idle', 'Keep revealing cells to find patterns', 'Not enough info yet — open more cells', 'WAITING');
-        hintList.style.display = 'none';
+        hintList.classList.remove('active');
         return;
       }
 
@@ -910,19 +1381,19 @@
 
       const total = flagMoves.size + safeMoves.size;
       if (total > 0) {
-        hintList.style.display = 'block';
-        let html = `<div class="hint-list-title">All current hints (${total})</div>`;
+        hintList.classList.add('active');
+        let html = `<div class="hint-list-title">All Current Hints (${total})</div>`;
         for (const [k, reason] of flagMoves) {
           const [r, c] = k.split(',').map(Number);
-          html += `<div class="hint-item"><div class="hint-dot dot-flag"></div><span style="color:#fca5a5;font-weight:600">Flag</span>&nbsp;Row ${r+1}, Col ${c+1}</div>`;
+          html += `<div class="hint-item"><div class="hint-dot dot-flag"></div><span style="color:#ef4444;font-weight:600">Flag</span>&nbsp;Row ${r+1}, Col ${c+1}</div>`;
         }
         for (const [k, reason] of safeMoves) {
           const [r, c] = k.split(',').map(Number);
-          html += `<div class="hint-item"><div class="hint-dot dot-safe"></div><span style="color:#86efac;font-weight:600">Open</span>&nbsp;Row ${r+1}, Col ${c+1}</div>`;
+          html += `<div class="hint-item"><div class="hint-dot dot-safe"></div><span style="color:#10b981;font-weight:600">Open</span>&nbsp;Row ${r+1}, Col ${c+1}</div>`;
         }
         hintList.innerHTML = html;
       } else {
-        hintList.style.display = 'none';
+        hintList.classList.remove('active');
       }
 
       if (flagMoves.size > 0 && safeMoves.size > 0) {
